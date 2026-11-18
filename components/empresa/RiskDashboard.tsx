@@ -2,13 +2,22 @@
 
 import { useMemo } from "react";
 import { useAppData } from "@/contexts/app-data-context";
-import { classificarRisco, pontuacaoRiscoGeral } from "@/lib/gut";
+import { calcularPrioridade, classificarRisco, pontuacaoRiscoGeral } from "@/lib/gut";
 
 export function RiskDashboard() {
   const { ameacas } = useAppData();
   const pontuacao = useMemo(() => pontuacaoRiscoGeral(ameacas), [ameacas]);
   const risco = useMemo(() => classificarRisco(pontuacao), [pontuacao]);
   const selecionadas = ameacas.filter((a) => a.selecionada).length;
+
+  const topAmeacas = useMemo(
+    () =>
+      [...ameacas]
+        .filter((a) => a.selecionada)
+        .sort((a, b) => calcularPrioridade(b) - calcularPrioridade(a))
+        .slice(0, 3),
+    [ameacas]
+  );
 
   const circunferencia = 2 * Math.PI * 54;
   const progresso = Math.min(100, (pontuacao / 100) * 100);
@@ -60,6 +69,32 @@ export function RiskDashboard() {
           </div>
         </div>
       </div>
+
+      {topAmeacas.length > 0 && (
+        <div className="mt-5 border-t border-border pt-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+            Top {topAmeacas.length} riscos prioritários
+          </p>
+          <ol className="flex flex-col gap-2">
+            {topAmeacas.map((ameaca, index) => (
+              <li
+                key={ameaca.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-field px-3 py-2 text-sm"
+              >
+                <span className="flex items-center gap-2 text-foreground">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-bold text-brand-strong">
+                    {index + 1}
+                  </span>
+                  {ameaca.label}
+                </span>
+                <span className="font-mono text-xs font-bold text-muted">
+                  P = {calcularPrioridade(ameaca)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

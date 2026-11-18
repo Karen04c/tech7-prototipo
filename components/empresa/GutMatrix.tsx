@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState } from "react";
 import { useAppData } from "@/contexts/app-data-context";
 import { calcularPrioridade } from "@/lib/gut";
 import type { Threat } from "@/lib/types";
@@ -11,13 +11,35 @@ interface GutMatrixProps {
   onSolicitarAjuda: (ameaca: Threat) => void;
 }
 
+function ordenarPorPrioridade(ameacas: Threat[]) {
+  return [...ameacas]
+    .sort((a, b) => calcularPrioridade(b) - calcularPrioridade(a))
+    .map((a) => a.id);
+}
+
 export function GutMatrix({ onSolicitarAjuda }: GutMatrixProps) {
   const { ameacas } = useAppData();
 
-  const ordenadas = useMemo(
-    () => [...ameacas].sort((a, b) => calcularPrioridade(b) - calcularPrioridade(a)),
-    [ameacas]
-  );
+  // A ordem da lista só é recalculada quando o conjunto de ameaças marcadas muda,
+  // nunca enquanto os sliders de G/U/T estão sendo ajustados — evita que a linha
+  // "pule" de posição no meio da edição.
+  const chaveSelecao = ameacas
+    .filter((a) => a.selecionada)
+    .map((a) => a.id)
+    .join(",");
+
+  const [chaveAnterior, setChaveAnterior] = useState(chaveSelecao);
+  const [ordem, setOrdem] = useState<string[]>(() => ordenarPorPrioridade(ameacas));
+
+  if (chaveSelecao !== chaveAnterior) {
+    setChaveAnterior(chaveSelecao);
+    setOrdem(ordenarPorPrioridade(ameacas));
+  }
+
+  const porId = new Map(ameacas.map((a) => [a.id, a]));
+  const ordenadas = ordem
+    .map((id) => porId.get(id))
+    .filter((a): a is Threat => Boolean(a));
 
   return (
     <div className="flex flex-col gap-4">

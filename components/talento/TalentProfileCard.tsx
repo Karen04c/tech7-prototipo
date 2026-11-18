@@ -3,10 +3,15 @@
 import { useAppData } from "@/contexts/app-data-context";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { getInitials } from "@/lib/initials";
+import { formatarReais } from "@/lib/rewards";
 
 export function TalentProfileCard() {
-  const { talento } = useAppData();
+  const { talento, oportunidades } = useAppData();
   const iniciais = getInitials(talento.nome);
+
+  const desafiosConcluidos = oportunidades.filter((o) => o.status === "concluida");
+  const totalXpGanho = desafiosConcluidos.reduce((soma, o) => soma + o.xpRecompensa, 0);
+  const totalReaisGanho = desafiosConcluidos.reduce((soma, o) => soma + o.recompensaReais, 0);
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
@@ -35,7 +40,22 @@ export function TalentProfileCard() {
         </div>
       </div>
 
-      <div className="mt-5 border-t border-border pt-4">
+      <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4 text-center">
+        <div>
+          <p className="text-lg font-bold text-foreground">{desafiosConcluidos.length}</p>
+          <p className="text-[11px] text-muted">Desafios concluídos</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-brand-strong">{formatarReais(totalReaisGanho)}</p>
+          <p className="text-[11px] text-muted">Ganho simbólico</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-foreground">{totalXpGanho.toLocaleString("pt-BR")} XP</p>
+          <p className="text-[11px] text-muted">XP acumulado em desafios</p>
+        </div>
+      </div>
+
+      <div className="mt-4 border-t border-border pt-4">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
           Medalhas &amp; Selos
         </p>
